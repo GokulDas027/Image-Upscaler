@@ -14,4 +14,5 @@ conda activate pytorch
 conda install pytorch==1.5.0 torchvision -c pytorch
 conda install scikit-image cython
 conda install -c anaconda flask==1.1.2
+pip install easydict
 ```

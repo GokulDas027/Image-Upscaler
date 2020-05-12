@@ -19,7 +19,8 @@ Original file is located at
 # Commented out IPython magic to ensure Python compatibility.
 from math import ceil, floor, log2
 import collections
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
+from collections.abc import Iterable
 import sys
 import numpy as np
 import torch
