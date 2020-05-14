@@ -896,7 +896,8 @@ def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, paddi
           input = input.cuda()
         output = model(input, scale).cpu() + data['bicubic']
       sr_img = tensor2im(output, mean, stddev)
-      ip_img = tensor2im(input, mean, stddev)
+      ip_img = tensor2im(data['input'], mean, stddev)
+      print(len(sr_img))
       psnr_val, ssim_val = eval_psnr_and_ssim(
                     sr_img, ip_img, scale)
       psnr_mean += psnr_val
@@ -908,7 +909,10 @@ def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, paddi
       upscaled_img.append(sr_img)
     
     # calculating the mean psnr annd ssim values of upscale
-    iid += 1
+    try:
+        iid += 1
+    except:
+        iid = 1
     psnr_mean /= iid
     ssim_mean /= iid
 
@@ -976,7 +980,7 @@ def main(scale, gan=True):
   input_size = checkpoint['params']['data']['input_size']
   mean = checkpoint['params']['train']['dataset']['mean']
   stddev = checkpoint['params']['train']['dataset']['stddev']
-  downscale = True #checkpoint['params']['test']['dataset']['downscale']
+  downscale = False #checkpoint['params']['test']['dataset']['downscale']
 
   # printing the config values
   print(f'scale        : {scale}')
@@ -1005,11 +1009,12 @@ def main(scale, gan=True):
 
   return upscaled_images
 
-upscaled_images = main(8)
+# upscaled_images = main(8)
 
 '''Displaying the upscaled image'''
 # for img in upscaled_images:
 #   io.imshow(img)
 
-
+if __name__ == "__main__":
+    upscaled_images = main(8)
 
