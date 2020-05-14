@@ -17,30 +17,33 @@ Original file is located at
 """## Imports and Utils"""
 
 # Commented out IPython magic to ensure Python compatibility.
-from math import ceil, floor, log2
-import collections
-from collections import OrderedDict
-from collections.abc import Iterable
-import sys
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.multiprocessing as multiprocessing
+from torch._C import _set_worker_pids, _set_worker_signal_handlers
+from torch.utils.data.dataloader import _BaseDataLoaderIter, DataLoader
+from torch.utils.data.dataloader import ExceptionWrapper#, _worker_manager_loop, pin_memory_batch
+from torch.utils.data._utils.signal_handling import _set_SIGCHLD_handler
+import torchvision.transforms as transforms
 import skimage.io as io
+from skimage import img_as_float
+from skimage.color import rgb2ycbcr
+from skimage.measure import compare_psnr, compare_ssim
+import collections
+from collections import OrderedDict
+from collections.abc import Iterable
 from PIL import Image
+import sys
 import queue
 import os
 import os.path as osp
 import glob
 import threading
 import random
-import torchvision.transforms as transforms
-from torch._C import _set_worker_pids, _set_worker_signal_handlers
-from torch.utils.data.dataloader import _BaseDataLoaderIter, DataLoader
-from torch.utils.data.dataloader import ExceptionWrapper#, _worker_manager_loop, pin_memory_batch
-from torch.utils.data._utils.signal_handling import _set_SIGCHLD_handler
 import matplotlib.pyplot as plt
+from math import ceil, floor, log2
 # %matplotlib inline
 
 """## Data preprocessing and loader
@@ -76,6 +79,51 @@ IMG_EXTENSIONS = ['jpg', 'jpeg', 'png', 'ppm', 'bmp', 'tiff']
 def is_image_file(filename):
     return any(
         filename.lower().endswith(extension) for extension in IMG_EXTENSIONS)
+
+def crop_boundaries(im, cs):
+    if cs > 1:
+        return im[cs:-cs, cs:-cs, ...]
+    else:
+        return im
+
+def mod_crop(im, scale):
+    h, w = im.shape[:2]
+    # return im[(h % scale):, (w % scale):, ...]
+    return im[:h - (h % scale), :w - (w % scale), ...]
+
+def eval_psnr_and_ssim(im1, im2, scale):
+    im1_t = np.atleast_3d(img_as_float(im1))
+    im2_t = np.atleast_3d(img_as_float(im2))
+
+    if im1_t.shape[2] == 1 or im2_t.shape[2] == 1:
+        im1_t = im1_t[..., 0]
+        im2_t = im2_t[..., 0]
+
+    else:
+        im1_t = rgb2ycbcr(im1_t)[:, :, 0:1] / 255.0
+        im2_t = rgb2ycbcr(im2_t)[:, :, 0:1] / 255.0
+
+    if scale > 1:
+        im1_t = mod_crop(im1_t, scale)
+        im2_t = mod_crop(im2_t, scale)
+
+        # NOTE conventionally, crop scale+6 pixels (EDSR, VDSR etc)
+        im1_t = crop_boundaries(im1_t, int(scale) + 6)
+        im2_t = crop_boundaries(im2_t, int(scale) + 6)
+
+    psnr_val = compare_psnr(im1_t, im2_t)
+    ssim_val = compare_ssim(
+        im1_t,
+        im2_t,
+        win_size=11,
+        gaussian_weights=True,
+        multichannel=True,
+        data_range=1.0,
+        K1=0.01,
+        K2=0.03,
+        sigma=1.5)
+
+    return psnr_val, ssim_val
 
 def get_filenames(source, image_format):
 
@@ -825,6 +873,9 @@ class ProSR(nn.Module):
 def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, padding=0):
   upscaled_img = []
   with torch.no_grad():
+    psnr_mean = 0
+    ssim_mean = 0
+
     for iid, data in enumerate(data_loader):
       if max_dimension:
         print(len(data['input']))
@@ -845,11 +896,25 @@ def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, paddi
           input = input.cuda()
         output = model(input, scale).cpu() + data['bicubic']
       sr_img = tensor2im(output, mean, stddev)
+      ip_img = tensor2im(input, mean, stddev)
+      psnr_val, ssim_val = eval_psnr_and_ssim(
+                    sr_img, ip_img, scale)
+      psnr_mean += psnr_val
+      ssim_mean += ssim_val
       # io.imshow(sr_img)
       fn = osp.join('output', osp.basename(data['input_fn'][0]))
       io.imsave(fn, sr_img)
       
       upscaled_img.append(sr_img)
+    
+    # calculating the mean psnr annd ssim values of upscale
+    iid += 1
+    psnr_mean /= iid
+    ssim_mean /= iid
+
+    print(f"PSNR value : {psnr_mean}")
+    print(f"SSIM value : {ssim_mean}")
+    
   return upscaled_img
 
 """## Input Procesing and loading"""
