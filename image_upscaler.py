@@ -30,7 +30,7 @@ import torchvision.transforms as transforms
 import skimage.io as io
 from skimage import img_as_float
 from skimage.color import rgb2ycbcr
-from skimage.measure import compare_psnr, compare_ssim
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 import collections
 from collections import OrderedDict
 from collections.abc import Iterable
@@ -111,8 +111,8 @@ def eval_psnr_and_ssim(im1, im2, scale):
         im1_t = crop_boundaries(im1_t, int(scale) + 6)
         im2_t = crop_boundaries(im2_t, int(scale) + 6)
 
-    psnr_val = compare_psnr(im1_t, im2_t)
-    ssim_val = compare_ssim(
+    psnr_val = peak_signal_noise_ratio(im1_t, im2_t)
+    ssim_val = structural_similarity(
         im1_t,
         im2_t,
         win_size=11,
@@ -124,6 +124,52 @@ def eval_psnr_and_ssim(im1, im2, scale):
         sigma=1.5)
 
     return psnr_val, ssim_val
+
+def benchmark(scale, upscaled_image=None, target_image=None):
+  if upscaled_image==None and target_image==None:
+    out = []
+    print("\nLet's check the Output and Original folders\n")
+    upscaled_image_names = get_filenames("output/", IMG_EXTENSIONS)
+    target_image_names = get_filenames("original/", IMG_EXTENSIONS)
+    for image in upscaled_image_names:
+      image_name = image.split("/")[1]
+      print(f"\nComparison of : {image_name}")
+      try:
+        upscaled_img = pil_loader("output/"+str(image_name))
+        target_img = pil_loader("original/"+str(image_name))
+
+        # print(upscaled_img.size)
+        # print(target_img.size)
+
+        psnr_val, ssim_val = eval_psnr_and_ssim(upscaled_img, target_img, scale)
+
+        print(f"\nPSNR value : {psnr_val}")
+        print(f"SSIM value : {ssim_val}")
+        out.append([psnr_val,ssim_val])
+      except:
+        print("\nNo matching target image found!, make sure the names are same")
+    
+    return out
+    
+  elif upscaled_image!=None and target_image!=None:
+    upscaled_img = pil_loader(upscaled_image)
+    target_img = pil_loader(target_image)
+
+    # print(upscaled_img.size)
+    # print(target_img.size)
+
+    psnr_val, ssim_val = eval_psnr_and_ssim(upscaled_img, target_img, scale)
+
+    print(f"Comparison between Upscaled Image : {upscaled_image}")
+    print(f"and Original High Res Image       : {target_image}")
+    print(f"\nPSNR value : {psnr_val}")
+    print(f"SSIM value : {ssim_val}")
+    
+    return [psnr_val, ssim_val]
+
+  else:    
+    print("You can't do that")
+
 
 def get_filenames(source, image_format):
 
@@ -1016,5 +1062,7 @@ def main(scale, gan=True, keep_res=True):
 #   io.imshow(img)
 
 if __name__ == "__main__":
-    upscaled_images = main(8, gan=True, keep_res=True)
+    scale = 2
+    upscaled_images = main(scale, gan=True, keep_res=True)
+    comparison_list = benchmark(scale)
 
