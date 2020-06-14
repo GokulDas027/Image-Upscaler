@@ -942,7 +942,7 @@ def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, paddi
           input = input.cuda()
         output = model(input, scale).cpu() + data['bicubic']
       sr_img = tensor2im(output, mean, stddev)
-      ip_img = tensor2im(data['input'], mean, stddev)
+      ip_img = tensor2im(data['bicubic'], mean, stddev)
       print(len(sr_img))
       psnr_val, ssim_val = eval_psnr_and_ssim(
                     sr_img, ip_img, scale)
@@ -1063,6 +1063,6 @@ def main(scale, gan=True, keep_res=True):
 
 if __name__ == "__main__":
     scale = 2
-    upscaled_images = main(scale, gan=True, keep_res=True)
+    upscaled_images = main(scale, gan=True, keep_res=False)
     comparison_list = benchmark(scale)
 
