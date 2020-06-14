@@ -943,9 +943,14 @@ def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, paddi
         output = model(input, scale).cpu() + data['bicubic']
       sr_img = tensor2im(output, mean, stddev)
       ip_img = tensor2im(data['bicubic'], mean, stddev)
-      print(len(sr_img))
+    #   print(len(sr_img))
       psnr_val, ssim_val = eval_psnr_and_ssim(
                     sr_img, ip_img, scale)
+      print("\nComparison with bicubically upscaled Input Images :")
+      print(f"of : {data['input_fn'][0]}")
+      print(f"PSNR value : {psnr_val}")
+      print(f"SSIM value : {ssim_val}")
+
       psnr_mean += psnr_val
       ssim_mean += ssim_val
       # io.imshow(sr_img)
@@ -962,8 +967,9 @@ def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, paddi
     psnr_mean /= iid
     ssim_mean /= iid
 
-    print(f"PSNR value : {psnr_mean}")
-    print(f"SSIM value : {ssim_mean}")
+    print("\nMean Comparison values between all bicubic and upscaled :")
+    print(f"PSNR mean value : {psnr_mean}")
+    print(f"SSIM mean value : {ssim_mean}")
     
   return upscaled_img
 
