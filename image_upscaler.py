@@ -923,7 +923,7 @@ def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, paddi
 
 """## Input Procesing and loading"""
 
-def main(scale, gan=True):
+def main(scale, gan=True, keep_res=True):
   # ensure the scale value to be 2,4 or 8
   if scale <= 2:
     scale = 2
@@ -980,7 +980,7 @@ def main(scale, gan=True):
   input_size = checkpoint['params']['data']['input_size']
   mean = checkpoint['params']['train']['dataset']['mean']
   stddev = checkpoint['params']['train']['dataset']['stddev']
-  downscale = False #checkpoint['params']['test']['dataset']['downscale']
+  downscale = keep_res #checkpoint['params']['test']['dataset']['downscale']
 
   # printing the config values
   print(f'scale        : {scale}')
@@ -1016,5 +1016,5 @@ def main(scale, gan=True):
 #   io.imshow(img)
 
 if __name__ == "__main__":
-    upscaled_images = main(8)
+    upscaled_images = main(8, gan=True, keep_res=True)
 
