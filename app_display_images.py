@@ -1,23 +1,24 @@
 import os
 from uuid import uuid4
-
+import glob
 from flask import Flask, request, render_template, send_from_directory
-
+import image_upscaler
 
 app = Flask(__name__)
 # app = Flask(__name__, static_folder="images")
-
 
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 @app.route("/")
 def index():
+    for file in glob.glob("./input/*"):
+        os.remove(file)
     return render_template("upload.html")
 
 @app.route("/upload", methods=["POST"])
 def upload():
-    target = os.path.join(APP_ROOT, 'input/')
+    target = os.path.join(APP_ROOT, 'input')
     # target = os.path.join(APP_ROOT, 'static/')
     print(target)
     if not os.path.isdir(target):
@@ -39,7 +40,8 @@ def upload():
 
 @app.route('/upload/<filename>')
 def send_image(filename):
-    return send_from_directory("input", filename)
+    flask_return = image_upscaler.main(8, gan=False)
+    return send_from_directory("input", filename=flask_return[0])
 
 
 

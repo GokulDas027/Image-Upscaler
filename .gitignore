@@ -1,3 +1,6 @@
 *.pyc
 *.pth
 .vscode
+input/*
+output/*
+test_examples/*

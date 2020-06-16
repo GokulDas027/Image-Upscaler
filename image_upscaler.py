@@ -17,30 +17,33 @@ Original file is located at
 """## Imports and Utils"""
 
 # Commented out IPython magic to ensure Python compatibility.
-from math import ceil, floor, log2
-import collections
-from collections import OrderedDict
-from collections.abc import Iterable
-import sys
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.multiprocessing as multiprocessing
+from torch._C import _set_worker_pids, _set_worker_signal_handlers
+from torch.utils.data.dataloader import _BaseDataLoaderIter, DataLoader
+from torch.utils.data.dataloader import ExceptionWrapper#, _worker_manager_loop, pin_memory_batch
+from torch.utils.data._utils.signal_handling import _set_SIGCHLD_handler
+import torchvision.transforms as transforms
 import skimage.io as io
+from skimage import img_as_float
+from skimage.color import rgb2ycbcr
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity
+import collections
+from collections import OrderedDict
+from collections.abc import Iterable
 from PIL import Image
+import sys
 import queue
 import os
 import os.path as osp
 import glob
 import threading
 import random
-import torchvision.transforms as transforms
-from torch._C import _set_worker_pids, _set_worker_signal_handlers
-from torch.utils.data.dataloader import _BaseDataLoaderIter, DataLoader
-from torch.utils.data.dataloader import ExceptionWrapper#, _worker_manager_loop, pin_memory_batch
-from torch.utils.data._utils.signal_handling import _set_SIGCHLD_handler
 import matplotlib.pyplot as plt
+from math import ceil, floor, log2
 # %matplotlib inline
 
 """## Data preprocessing and loader
@@ -76,6 +79,97 @@ IMG_EXTENSIONS = ['jpg', 'jpeg', 'png', 'ppm', 'bmp', 'tiff']
 def is_image_file(filename):
     return any(
         filename.lower().endswith(extension) for extension in IMG_EXTENSIONS)
+
+def crop_boundaries(im, cs):
+    if cs > 1:
+        return im[cs:-cs, cs:-cs, ...]
+    else:
+        return im
+
+def mod_crop(im, scale):
+    h, w = im.shape[:2]
+    # return im[(h % scale):, (w % scale):, ...]
+    return im[:h - (h % scale), :w - (w % scale), ...]
+
+def eval_psnr_and_ssim(im1, im2, scale):
+    im1_t = np.atleast_3d(img_as_float(im1))
+    im2_t = np.atleast_3d(img_as_float(im2))
+
+    if im1_t.shape[2] == 1 or im2_t.shape[2] == 1:
+        im1_t = im1_t[..., 0]
+        im2_t = im2_t[..., 0]
+
+    else:
+        im1_t = rgb2ycbcr(im1_t)[:, :, 0:1] / 255.0
+        im2_t = rgb2ycbcr(im2_t)[:, :, 0:1] / 255.0
+
+    if scale > 1:
+        im1_t = mod_crop(im1_t, scale)
+        im2_t = mod_crop(im2_t, scale)
+
+        # NOTE conventionally, crop scale+6 pixels (EDSR, VDSR etc)
+        im1_t = crop_boundaries(im1_t, int(scale) + 6)
+        im2_t = crop_boundaries(im2_t, int(scale) + 6)
+
+    psnr_val = peak_signal_noise_ratio(im1_t, im2_t)
+    ssim_val = structural_similarity(
+        im1_t,
+        im2_t,
+        win_size=11,
+        gaussian_weights=True,
+        multichannel=True,
+        data_range=1.0,
+        K1=0.01,
+        K2=0.03,
+        sigma=1.5)
+
+    return psnr_val, ssim_val
+
+def benchmark(scale, upscaled_image=None, target_image=None):
+  if upscaled_image==None and target_image==None:
+    out = []
+    print("\nLet's check the Output and Original folders\n")
+    upscaled_image_names = get_filenames("output/", IMG_EXTENSIONS)
+    target_image_names = get_filenames("original/", IMG_EXTENSIONS)
+    for image in upscaled_image_names:
+      image_name = image.split("/")[1]
+      print(f"\nComparison of : {image_name}")
+      try:
+        upscaled_img = pil_loader("output/"+str(image_name))
+        target_img = pil_loader("original/"+str(image_name))
+
+        # print(upscaled_img.size)
+        # print(target_img.size)
+
+        psnr_val, ssim_val = eval_psnr_and_ssim(upscaled_img, target_img, scale)
+
+        print(f"\nPSNR value : {psnr_val}")
+        print(f"SSIM value : {ssim_val}")
+        out.append([psnr_val,ssim_val])
+      except:
+        print("\nNo matching target image found!, make sure the names are same")
+    
+    return out
+    
+  elif upscaled_image!=None and target_image!=None:
+    upscaled_img = pil_loader(upscaled_image)
+    target_img = pil_loader(target_image)
+
+    # print(upscaled_img.size)
+    # print(target_img.size)
+
+    psnr_val, ssim_val = eval_psnr_and_ssim(upscaled_img, target_img, scale)
+
+    print(f"Comparison between Upscaled Image : {upscaled_image}")
+    print(f"and Original High Res Image       : {target_image}")
+    print(f"\nPSNR value : {psnr_val}")
+    print(f"SSIM value : {ssim_val}")
+    
+    return [psnr_val, ssim_val]
+
+  else:    
+    print("You can't do that")
+
 
 def get_filenames(source, image_format):
 
@@ -825,9 +919,11 @@ class ProSR(nn.Module):
 def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, padding=0):
   upscaled_img = []
   with torch.no_grad():
+    psnr_mean = 0
+    ssim_mean = 0
+
     for iid, data in enumerate(data_loader):
       if max_dimension:
-        print(len(data['input']))
         data_chunks = DataChunks({'input':data['input']},
                                   max_dimension,
                                   padding, scale)
@@ -838,23 +934,47 @@ def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, paddi
           output = model(input,scale)
                     
           data_chunks.gather(output)
-          output = data_chunks.concatenate() + data['bicubic']
+        output = data_chunks.concatenate() + data['bicubic']
       else:
         input = data['input']
         if gpu:
           input = input.cuda()
         output = model(input, scale).cpu() + data['bicubic']
       sr_img = tensor2im(output, mean, stddev)
+      ip_img = tensor2im(data['bicubic'], mean, stddev)
+    #   print(len(sr_img))
+      psnr_val, ssim_val = eval_psnr_and_ssim(
+                    sr_img, ip_img, scale)
+      print("\nComparison with bicubically upscaled Input Images :")
+      print(f"of : {data['input_fn'][0]}")
+      print(f"PSNR value : {psnr_val}")
+      print(f"SSIM value : {ssim_val}")
+
+      psnr_mean += psnr_val
+      ssim_mean += ssim_val
       # io.imshow(sr_img)
       fn = osp.join('output', osp.basename(data['input_fn'][0]))
       io.imsave(fn, sr_img)
       
       upscaled_img.append(sr_img)
+    
+    # calculating the mean psnr annd ssim values of upscale
+    try:
+        iid += 1
+    except:
+        iid = 1
+    psnr_mean /= iid
+    ssim_mean /= iid
+
+    print("\nMean Comparison values between all bicubic and upscaled :")
+    print(f"PSNR mean value : {psnr_mean}")
+    print(f"SSIM mean value : {ssim_mean}")
+    
   return upscaled_img
 
 """## Input Procesing and loading"""
 
-def main(scale, gan=True):
+def main(scale, gan=True, keep_res=True):
   # ensure the scale value to be 2,4 or 8
   if scale <= 2:
     scale = 2
@@ -911,7 +1031,7 @@ def main(scale, gan=True):
   input_size = checkpoint['params']['data']['input_size']
   mean = checkpoint['params']['train']['dataset']['mean']
   stddev = checkpoint['params']['train']['dataset']['stddev']
-  downscale = True #checkpoint['params']['test']['dataset']['downscale']
+  downscale = keep_res #checkpoint['params']['test']['dataset']['downscale']
 
   # printing the config values
   print(f'scale        : {scale}')
@@ -940,11 +1060,14 @@ def main(scale, gan=True):
 
   return upscaled_images
 
-upscaled_images = main(8)
+# upscaled_images = main(8)
 
 '''Displaying the upscaled image'''
 # for img in upscaled_images:
 #   io.imshow(img)
 
-
+if __name__ == "__main__":
+    scale = 2
+    upscaled_images = main(scale, gan=True, keep_res=False)
+    comparison_list = benchmark(scale)
 
