@@ -924,7 +924,6 @@ def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, paddi
 
     for iid, data in enumerate(data_loader):
       if max_dimension:
-        print(len(data['input']))
         data_chunks = DataChunks({'input':data['input']},
                                   max_dimension,
                                   padding, scale)
@@ -935,7 +934,7 @@ def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, paddi
           output = model(input,scale)
                     
           data_chunks.gather(output)
-          output = data_chunks.concatenate() + data['bicubic']
+        output = data_chunks.concatenate() + data['bicubic']
       else:
         input = data['input']
         if gpu:
