@@ -11,6 +11,8 @@ run_with_ngrok(app)   #starts ngrok when the app is run
 
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+os.chdir(APP_ROOT)
+
 @app.route("/")
 def index():
     for file in glob.glob("./input/*"):
