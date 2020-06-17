@@ -3,11 +3,10 @@ from uuid import uuid4
 import glob
 from flask_ngrok import run_with_ngrok
 from flask import Flask, request, render_template, send_from_directory
-import image_upscaler
+# import image_upscaler
 
 app = Flask(__name__)
 run_with_ngrok(app)   #starts ngrok when the app is run
-# app = Flask(name, static_folder="images")
 
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -22,8 +21,7 @@ def index():
 @app.route("/upload", methods=["POST"])
 def upload():
     target = os.path.join(APP_ROOT, 'input')
-    # target = os.path.join(APP_ROOT, 'static/')
-    print(target)
+    files_list = []
     if not os.path.isdir(target):
             os.mkdir(target)
     else:
@@ -33,6 +31,7 @@ def upload():
         print(upload)
         print("{} is the file name".format(upload.filename))
         filename = upload.filename
+        files_list.append(filename)
         destination = "/".join([target, filename])
         print ("Accept incoming file:", filename)
         print ("Save it to:", destination)
@@ -43,9 +42,9 @@ def upload():
     print(gan)
     print(scale)
     print(resl)
-    flask_return = image_upscaler.main(scale=int(scale), gan=True, keep_res=True)
-    # return send_from_directory("images", filename, as_attachment=True)
-    return render_template("display.html", image_name=filename)
+    print(files_list)
+    # flask_return = image_upscaler.main(scale=int(scale), gan=True, keep_res=True)
+    return render_template("display.html", image_name=files_list)
 
 @app.route('/upload/<filename>')
 def send_image(filename):

@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
+
 <body>
-Uploaded!!
-<br>
-<img src="/upload/{{ image_name }}">
-
-
+    <h1>Upscaled Images</h1>
+    <br>
+    {% for image in image_name %}
+    <br>
+    <img src="/upload/{{ image }}">
+    <br>
+    {% endfor %}
 </html>
