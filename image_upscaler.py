@@ -1069,5 +1069,5 @@ def main(scale, gan=True, keep_res=True):
 if __name__ == "__main__":
     scale = 2
     upscaled_images = main(scale, gan=True, keep_res=False)
-    comparison_list = benchmark(scale)
+    # comparison_list = benchmark(scale)
 
