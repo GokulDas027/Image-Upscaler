@@ -43,7 +43,7 @@ def upload():
     print(scale)
     print(resl)
     print(files_list)
-    flask_return = image_upscaler.main(scale=int(scale), gan=True, keep_res=True)
+    flask_return = image_upscaler.main(scale=int(scale), gan=gan, keep_res=resl)
     return render_template("display.html", image_name=files_list)
 
 @app.route('/upload/<filename>')
