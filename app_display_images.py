@@ -39,10 +39,14 @@ def upload():
     gan = request.form.get('mycheckbox')
     scale = request.form.get('mycheckbox1')
     resl = request.form.get('mycheckbox2')
+
+    gan = True if gan == "True" else False
+    resl = True if resl == "True" else False
+
     print(gan)
     print(scale)
     print(resl)
-    print(files_list)
+
     flask_return = image_upscaler.main(scale=int(scale), gan=gan, keep_res=resl)
     return render_template("display.html", image_name=files_list)
 
