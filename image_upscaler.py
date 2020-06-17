@@ -989,7 +989,7 @@ def main(scale, gan=True, keep_res=True):
 
   # input images from the folder
   input_path = 'images' # image input path
-  if not osp.isdir('input'):
+  if not osp.isdir('images'):
     print('file no found')
     os.makedirs('images')
   IMG_EXTENSIONS = ['jpg', 'jpeg', 'png', 'ppm', 'bmp', 'tiff']
