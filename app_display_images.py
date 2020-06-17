@@ -1,10 +1,12 @@
 import os
 from uuid import uuid4
 import glob
+from flask_ngrok import run_with_ngrok
 from flask import Flask, request, render_template, send_from_directory
 import image_upscaler
 
 app = Flask(__name__)
+run_with_ngrok(app)   #starts ngrok when the app is run
 # app = Flask(__name__, static_folder="images")
 
 
@@ -51,4 +53,4 @@ def send_image(filename):
 
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    app.run()
