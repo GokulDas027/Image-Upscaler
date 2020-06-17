@@ -41,13 +41,13 @@ def upload():
     print(gan)
     print(scale)
     print(resl)
+    flask_return = image_upscaler.main(scale=scale, gan=True, keep_res=True)
     # return send_from_directory("images", filename, as_attachment=True)
     return render_template("display.html", image_name=filename)
 
 @app.route('/upload/<filename>')
 def send_image(filename):
-    flask_return = image_upscaler.main(scale=scale, gan=True, keep_res=True)
-    return send_from_directory("input", filename=flask_return[0])
+    return send_from_directory("input", filename=filename)
 
 
 
