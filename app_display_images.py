@@ -7,7 +7,7 @@ import image_upscaler
 
 app = Flask(__name__)
 run_with_ngrok(app)   #starts ngrok when the app is run
-# app = Flask(__name__, static_folder="images")
+# app = Flask(name, static_folder="images")
 
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -41,13 +41,13 @@ def upload():
     print(gan)
     print(scale)
     print(resl)
-    flask_return = image_upscaler.main(scale=scale, gan=True, keep_res=True)
+    flask_return = image_upscaler.main(scale=int(scale), gan=True, keep_res=True)
     # return send_from_directory("images", filename, as_attachment=True)
     return render_template("display.html", image_name=filename)
 
 @app.route('/upload/<filename>')
 def send_image(filename):
-    return send_from_directory("input", filename=filename)
+    return send_from_directory("input/", filename=filename)
 
 
 
