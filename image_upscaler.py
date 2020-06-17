@@ -917,6 +917,8 @@ class ProSR(nn.Module):
 """## Inferencing on model"""
 
 def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, padding=0):
+  if scale == 8 and max_dimension==0:
+      max_dimension = 200
   upscaled_img = []
   with torch.no_grad():
     psnr_mean = 0
