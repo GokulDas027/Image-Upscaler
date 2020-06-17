@@ -3,5 +3,6 @@
 .vscode
 input/*
 output/*
+images/*
 test_examples/*
 venv/*

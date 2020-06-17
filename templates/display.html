@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
-<body>
-Uploaded
-<img src="{{url_for('send_image', filename=input_name)}},">
 
+<body>
+    <h1>Upscaled Images</h1>
+    <br>
+    {% for image in image_name %}
+    <br>
+    <img src="/upload/{{ image }}">
+    <br>
+    <img src="/upload/{{ "upscaled_"+image }}">
+    <br>
+    {% endfor %}
 </html>

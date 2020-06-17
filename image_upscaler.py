@@ -917,6 +917,8 @@ class ProSR(nn.Module):
 """## Inferencing on model"""
 
 def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, padding=0):
+  if scale == 8 and max_dimension==0:
+      max_dimension = 200
   upscaled_img = []
   with torch.no_grad():
     psnr_mean = 0
@@ -953,7 +955,7 @@ def upscale(model, data_loader, mean, stddev, scale, gpu, max_dimension=0, paddi
       psnr_mean += psnr_val
       ssim_mean += ssim_val
       # io.imshow(sr_img)
-      fn = osp.join('output', osp.basename(data['input_fn'][0]))
+      fn = osp.join('images', "upscaled_"+osp.basename(data['input_fn'][0]))
       io.imsave(fn, sr_img)
       
       upscaled_img.append(sr_img)
@@ -988,10 +990,10 @@ def main(scale, gan=True, keep_res=True):
   print("GPU availability : " + str(gpu))
 
   # input images from the folder
-  input_path = 'input' # image input path
-  if not osp.isdir('input'):
+  input_path = 'images' # image input path
+  if not osp.isdir('images'):
     print('file no found')
-    os.makedirs('input')
+    os.makedirs('images')
   IMG_EXTENSIONS = ['jpg', 'jpeg', 'png', 'ppm', 'bmp', 'tiff']
   input_images = get_filenames(input_path, IMG_EXTENSIONS)
   
@@ -1069,5 +1071,5 @@ def main(scale, gan=True, keep_res=True):
 if __name__ == "__main__":
     scale = 2
     upscaled_images = main(scale, gan=True, keep_res=False)
-    comparison_list = benchmark(scale)
+    # comparison_list = benchmark(scale)
 
