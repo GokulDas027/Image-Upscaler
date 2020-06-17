@@ -9,12 +9,11 @@ app = Flask(__name__)
 
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-
 @app.route("/")
 def index():
     for file in glob.glob("./input/*"):
         os.remove(file)
-    return render_template("upload.html")
+    return render_template("index.html")
 
 @app.route("/upload", methods=["POST"])
 def upload():
@@ -34,17 +33,22 @@ def upload():
         print ("Accept incoming file:", filename)
         print ("Save it to:", destination)
         upload.save(destination)
-
+    gan = request.form.get('mycheckbox')
+    scale = request.form.get('mycheckbox1')
+    resl = request.form.get('mycheckbox2')
+    print(gan)
+    print(scale)
+    print(resl)
     # return send_from_directory("images", filename, as_attachment=True)
     return render_template("display.html", image_name=filename)
 
 @app.route('/upload/<filename>')
 def send_image(filename):
-    flask_return = image_upscaler.main(8, gan=False)
+    flask_return = image_upscaler.main(scale=scale, gan=True, keep_res=True)
     return send_from_directory("input", filename=flask_return[0])
 
 
 
 
 if __name__ == "__main__":
-    app.run(port=4555, debug=True)
+    app.run(port=5000, debug=True)
