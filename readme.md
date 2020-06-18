@@ -26,3 +26,6 @@ pip install easydict
 #### This could be hosted on Colab, temporarily ofcourse..
 > The ColabNotebook can be accessed [here](https://colab.research.google.com/drive/1RHKrMMYIm8GNih9V2LXq4HwKurwPtdFn?usp=sharing)
 > Colab ❤
+
+#### Examples [here](./example.md)
+
