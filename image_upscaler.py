@@ -128,14 +128,17 @@ def eval_psnr_and_ssim(im1, im2, scale):
 def benchmark(scale, upscaled_image=None, target_image=None):
   if upscaled_image==None and target_image==None:
     out = []
+    if not osp.isdir('original'):
+      print('folder not found')
+      os.makedirs('original')
     print("\nLet's check the Output and Original folders\n")
-    upscaled_image_names = get_filenames("output/", IMG_EXTENSIONS)
+    upscaled_image_names = get_filenames("images/", IMG_EXTENSIONS)
     target_image_names = get_filenames("original/", IMG_EXTENSIONS)
-    for image in upscaled_image_names:
+    for image in target_image_names:
       image_name = image.split("/")[1]
       print(f"\nComparison of : {image_name}")
       try:
-        upscaled_img = pil_loader("output/"+str(image_name))
+        upscaled_img = pil_loader("images/upscaled_"+str(image_name))
         target_img = pil_loader("original/"+str(image_name))
 
         # print(upscaled_img.size)
@@ -992,8 +995,9 @@ def main(scale, gan=True, keep_res=True):
   # input images from the folder
   input_path = 'images' # image input path
   if not osp.isdir('images'):
-    print('file no found')
+    print('folder not found')
     os.makedirs('images')
+
   IMG_EXTENSIONS = ['jpg', 'jpeg', 'png', 'ppm', 'bmp', 'tiff']
   input_images = get_filenames(input_path, IMG_EXTENSIONS)
   
@@ -1053,10 +1057,6 @@ def main(scale, gan=True, keep_res=True):
         # source, scale, mean, stddev, downscale, input_size
   data_loader = DataLoader_(dataset, batch_size=1)
 
-  # create the output folder if it doesn't exist already
-  if not osp.isdir('output'):
-    os.makedirs('output')
-
   # upscaling the image
   upscaled_images = upscale(model, data_loader, mean, stddev, scale, gpu)
 
@@ -1071,5 +1071,9 @@ def main(scale, gan=True, keep_res=True):
 if __name__ == "__main__":
     scale = 2
     upscaled_images = main(scale, gan=True, keep_res=False)
-    # comparison_list = benchmark(scale)
+    comparison_list = benchmark(scale) 
+    # benchmarking needs an original high quality image in the "original" folder with
+    # the same name.
+    # upscaled image name : upscaled_filenamex.png
+    # original image name : filenamex.png
 

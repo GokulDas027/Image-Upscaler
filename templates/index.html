@@ -1,229 +1,84 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Image upscaler</title>
-		<!-- Description, Keywords and Author -->
-		<meta name="description" content="Your description">
-		<meta name="keywords" content="Your,Keywords">
-		<meta name="author" content="ResponsiveWebInc">
-
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-		<!-- Styles -->
-		<!-- Bootstrap CSS -->
-		<link href="{{ url_for('static', filename = 'css/bootstrap.min.css') }}" rel="stylesheet">
-		<!-- Font awesome CSS -->
-		<link href="{{ url_for('static', filename = 'css/font-awesome.min.css') }}" rel="stylesheet">	
-		<!-- Custom CSS -->
-		<link href="{{ url_for('static', filename = 'css/style.css') }}" rel="stylesheet">
-
-		<!-- Favicon -->
-		<link rel="shortcut icon" href="#">
-		<style>
-			.image-preview{
-				width: 300px;
-			    min-height: 108px;
-				border:2px;
-				display: flex;
-
-				align-items: center;
-				justify-content: center;
-				font-weight: bold;
-				color: rgb(172, 151, 151);
-
-				}
-			.image-preview--image{
-				display:none;
-				width: 100%;
-
-			}
-
-			</style>
-	</head>
-
-	<body>
-		
-
-		<!-- wrapper -->
-		<div class="wrapper">
-			<!-- banner -->
-			<div class="banner">
-				<div class="container">
-					<!-- banner content -->
-					<div class="banner-content">
-						<!-- logo image -->
+<head>
+	<meta charset="utf-8">
+	<title>Image upscaler</title>
+	<meta name="description" content="Your description">
+	<meta name="keywords" content="Your,Keywords">
+	<meta name="author" content="ResponsiveWebInc">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="{{ url_for('static', filename = 'css/bootstrap.min.css') }}" rel="stylesheet">
+	<link href="{{ url_for('static', filename = 'css/style.css') }}" rel="stylesheet">
+	<link rel="shortcut icon" href="#">
+</head>
+<body>
+	<div class="wrapper padding">
+		<div class="feature">
+			<div class="container m-20">
+				<div class="row">
+					<div class="col-md-5 col-sm-5">
 						<p id="heading">IMAGE UPSCALER</p>
-						<!-- short paragraph -->
-						<p>Powerful AI to increase image resolution without quality loss.<br>100% automatic and fast.</p>
-						<!-- button link -->
+						<p id="text">
+							<JPG,PNG. Max Size 5 Mb>
+						</p>
+						<br>
+						<br>
+						<form id="upload-form" action="{{ url_for('upload') }}" method="POST"
+							enctype="multipart/form-data">
+							<strong>Files:</strong><br>
+							<input id="file-picker" type="file" name="file" accept="image/*" multiple>
+							<div id="msg"></div>
+							<script>
+								$("#file-picker").change(function () {
+									var input = document.getElementById('file-picker');
 
-					</div>
-				</div>
-			</div>
+									for (var i = 0; i < input.files.length; i++) {
 
-			<!-- feature block -->
-			<div class="feature">
-				<div class="container">
-					<div class="row">
-						<div class="col-md-5 col-sm-5">
-							<!-- feature item -->
-							<div class="feature-item" >
-								<!-- icon -->
-								<i class="fa fa-pinterest"></i>
-								<!-- heading -->
+										var ext = input.files[i].name.substring(input.files[i].name.lastIndexOf('.') + 1).toLowerCase()
 
-								<!--input type ="file" name="inpFile" id="inpfile">
-								<div class="image-preview" id="imagepreview">
-									<img src="" alt="Image Preview" class="image-previe__image">
-									<span class="image-preview__default-text">Image Preview</span>
-								</div-->
-								<h4> Drop your image here to get high quality image</h4>
-								<!-- paragraph -->
-								<p id="text"><JPG,PNG. Max Size 5 Mb></p>
-								<form id="upload-form" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
-
-									<strong>Files:</strong><br>
-									<input id="file-picker" type="file" name="file" accept="image/*" multiple>
-									<div id="msg"></div>
-		
-		
-									<!--input type="submit" value="Upload!" id="upload-button"-->
-		
-								
-								<script>
-		
-									$("#file-picker").change(function(){
-								
-										var input = document.getElementById('file-picker');
-								
-										for (var i=0; i<input.files.length; i++)
-										{
-										//koala.jpg, koala.JPG substring(index) lastIndexOf('a') koala.1.jpg
-											var ext= input.files[i].name.substring(input.files[i].name.lastIndexOf('.')+1).toLowerCase()
-								
-											if ((ext == 'jpg') || (ext == 'png'))
-											{
-												$("#msg").text("Files are supported")
-											}
-											else
-											{
-												$("#msg").text("Files are NOT supported")
-												document.getElementById("file-picker").value ="";
-											}
-								
+										if ((ext == 'jpg') || (ext == 'png')) {
+											$("#msg").text("Files are supported")
 										}
-								
-								
-									} );
-								
-								</script>	
-							</div>
-						</div>
-							<li><h5>would you like to use gan algorithm</h5></li>
-							Yes<input type="checkbox" value="True" name="mycheckbox">
-							No<input type="checkbox" value="False" name="mycheckbox">
-							<li></li>
-							<li><h5>select upscaling level</h5></li>
-							<li>
-								2x<input type="checkbox" value="2" name="mycheckbox1">
-								4x<input type="checkbox" value="4" name="mycheckbox1">
-								6x<input type="checkbox" value="6" name="mycheckbox1">
-								8x<input type="checkbox" value="8" name="mycheckbox1">
-							</li>
-							<li></li>
-							<li><h5>keep the same resolution</h5></li>
-							Yes<input type="checkbox" value="True" name="mycheckbox2">
-							No<input type="checkbox" value="False" name="mycheckbox2">
-							<li></li>
-							<li>
-								<input type="submit" value="Upload!" id="upload-button">
-							</li>			
-								</form>	
-							<!--a href="#" class="btn btn-info btn-lg">Using gan</a-->
+										else {
+											$("#msg").text("Files are NOT supported")
+											document.getElementById("file-picker").value = "";
+										}
+									}
+								});
+							</script>
 					</div>
 				</div>
+				<br>
+				
+					<h3>Which technique would you like to use?</h3>
+					<p>ProSR for multi-scale superresolution
+					ProGanSR for perceptual enhancement</p>
+					<br>
+				
+				ProGANSR &nbsp;<input type="radio" value="True" name="mycheckbox">&nbsp;
+				ProSR &nbsp;<input type="radio" value="False" name="mycheckbox" checked="checked">
+				<br>
+				
+					<h3>Select upscaling level</h3>
+				
+					2x &nbsp;<input type="radio" value="2" name="mycheckbox1" checked="checked">&nbsp;
+					4x &nbsp;<input type="radio" value="4" name="mycheckbox1">&nbsp;
+					8x &nbsp;<input type="radio" value="8" name="mycheckbox1">&nbsp;
+				<br>
+				
+					<h3>Keep the same resolution</h3>
+				
+				Yes &nbsp;<input type="radio" value="True" name="mycheckbox2">&nbsp;
+				No &nbsp;<input type="radio" value="False" name="mycheckbox2" checked="checked">&nbsp;
+				<br>
+				<br>
+				
+					<input type="submit" value="UPSCALE" id="upload-button">
+				
+				</form>
 			</div>
-
-			<!-- subscribe block -->
-			<div class="subscribe">
-				<div class="container">
-					<div class="sub-content">
-						<div class="row">
-							<div class="col-md-6 col-sm-6">
-								<!-- subscribe update message -->
-								<div class="sub-message">
-									<!-- heading -->
-									<h3>Get Subscribe For Any Updates!</h3>
-									<!-- paragraph -->
-									<!--p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p-->
-									<!-- paragraph -->
-									<!--p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p-->
-									<!-- update form  -->
-									<form role="form">
-										<div class="input-group">
-											<input type="text" class="form-control input-lg" placeholder="Email Address">
-											<span class="input-group-btn">
-												<button class="btn btn-info btn-lg" type="button">Subscribe</button>
-											</span>
-										</div><!-- /input-group -->
-									</form>
-								</div>
-							</div>
-							<div class="col-md-6 col-sm-6">
-								<div class="embed-responsive embed-responsive-16by9">
-									<iframe class="embed-responsive-item" src="//www.youtube.com/embed/1PKxo9sH0V0" frameborder="0" allowfullscreen></iframe>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- footer above social block -->
-			<div class="footer-above">
-				<div class="container">
-					<!-- footer above main content -->
-					<div class="above-content">
-						<!-- testimonial content / paragraph -->
-						<p class="post">"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quaeet quasi architecto beatae vitae dicta sunt explicabo."</p>
-						<!-- heading -->
-						<h4>Get In Touch With Social Media</h4>
-						<div class="social">
-							<a href="#"><i class="fa fa-facebook"></i></a>
-							<a href="#"><i class="fa fa-google-plus"></i></a>
-							<a href="#"><i class="fa fa-linkedin"></i></a>
-							<a href="#"><i class="fa fa-pinterest"></i></a>
-							<a href="#"><i class="fa fa-twitter"></i></a>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- footer -->
-			<footer>
-				<div class="container">
-					<!-- navigation link -->
-					<p class="nav-link"><a href="#">Contact</a> &nbsp;|&nbsp; <a href="#">Downloads</a> &nbsp;|&nbsp; <a href="#">Email</a> &nbsp;|&nbsp; <a href="#">Support</a> &nbsp;|&nbsp; <a href="#">Privacy Policy</a></p>
-					<!-- copy right -->
-					<!-- This theme comes under Creative Commons Attribution 4.0 Unported. So don't remove below link back -->
-					<p class="copy-right">Copyright &copy; 2014 <a href="#">Your Site</a> | Designed By : <a href="http://www.indioweb.in/portfolio">IndioWeb</a>, All rights reserved. </p>
-				</div>
-			</footer>
-
 		</div>
+	</div>
+</body>
 
-
-		<!-- Javascript files -->
-		<!-- jQuery -->
-		<script src="{{url_for('static', filename='js/jquery.js') }}"></script>
-		<!-- Bootstrap JS -->
-		<script src="{{url_for('static', filename='js/bootstrap.min.js') }}"></script>
-		<!-- Respond JS for IE8 -->
-		<script src="{{url_for('static', filename='js/respond.min.js') }}"></script>
-		<!-- HTML5 Support for IE -->
-		<script src="{{url_for('static', filename='js/html5shiv.js') }}"></script>
-		<!-- Custom JS -->
-		<script src="{{url_for('static', filename='js/custom.js') }}"></script>
-	</body>	
 </html>
