@@ -100,9 +100,9 @@ hr{
 .feature {
 	padding-top: 60px;
 	padding-bottom: 100px;
-	margin-left: 200px;
+	/* margin-left: 200px;
 	margin-right: 200px;
-	margin-bottom: 30px;
+	margin-bottom: 30px; */
 	border: 2px dotted black;}
 	
 
