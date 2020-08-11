@@ -1,5 +1,3 @@
-** Educational Purposes ** 
-
 ## Instructions to SetUp
 
 ### Anaconda
